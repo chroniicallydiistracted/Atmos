@@ -69,3 +69,43 @@ variable "budget_limit" {
   type        = number
   default     = 30
 }
+
+# Alerting configuration
+variable "alert_email" {
+  description = "Email address for alerts"
+  type        = string
+  default     = "andre@westfam.media"
+}
+
+variable "discord_webhook_url" {
+  description = "Discord webhook URL for notifications (optional)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "twilio_account_sid" {
+  description = "Twilio Account SID for SMS notifications (optional)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "twilio_auth_token" {
+  description = "Twilio Auth Token for SMS notifications (optional)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "twilio_from_phone" {
+  description = "Twilio phone number to send SMS from (optional)"
+  type        = string
+  default     = ""
+}
+
+variable "alert_phone" {
+  description = "Phone number to send SMS alerts to (optional)"
+  type        = string
+  default     = ""
+}

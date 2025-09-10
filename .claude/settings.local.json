@@ -10,7 +10,12 @@
       "Bash(export PATH=$PATH:~/bin)",
       "Bash(aws:*)",
       "Bash(npm install)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(./scripts/deploy/setup-ecr.sh:*)",
+      "Bash(./scripts/deploy/build-and-push-containers.sh:*)",
+      "Bash(docker:*)",
+      "Bash(terraform:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
