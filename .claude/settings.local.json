@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod:*)",
+      "Bash(curl:*)",
+      "Bash(unzip:*)",
+      "Bash(python3:*)",
+      "Bash(sudo:*)",
+      "Bash(./aws/install --install-dir ~/aws-cli --bin-dir ~/bin)",
+      "Bash(export PATH=$PATH:~/bin)",
+      "Bash(aws:*)",
+      "Bash(npm install)",
+      "Bash(npm run build:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

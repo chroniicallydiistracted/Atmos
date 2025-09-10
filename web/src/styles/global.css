@@ -1,0 +1,179 @@
+/* MapLibre GL styles */
+@import 'maplibre-gl/dist/maplibre-gl.css';
+
+/* Reset and base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+/* Control panel styles */
+.control-panel {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 12px;
+  font-size: 14px;
+  max-width: 300px;
+}
+
+.control-panel h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Layer toggle styles */
+.layer-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.layer-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.layer-item input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.layer-item label {
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  flex: 1;
+}
+
+.layer-item.disabled label {
+  color: #999;
+}
+
+/* Legend styles */
+.legend {
+  margin-top: 4px;
+}
+
+.legend-item {
+  margin-bottom: 12px;
+}
+
+.legend-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.legend-scale {
+  display: flex;
+  height: 20px;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.legend-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #666;
+}
+
+/* Time slider styles */
+.time-slider {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 16px;
+}
+
+.time-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.play-button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.play-button:hover {
+  background: #1d4ed8;
+}
+
+.play-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.time-info {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+.time-range {
+  width: 100%;
+  margin: 0;
+  cursor: pointer;
+}
+
+.stale-indicator {
+  background: #fbbf24;
+  color: #92400e;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .control-panel {
+    max-width: 250px;
+    font-size: 13px;
+  }
+  
+  .time-slider {
+    margin: 0 10px;
+    padding: 12px;
+  }
+  
+  .time-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+}

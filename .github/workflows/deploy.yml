@@ -1,0 +1,241 @@
+name: Deploy AtmosInsight
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - production
+        - staging
+
+env:
+  AWS_REGION: us-east-1
+  NODE_VERSION: '20'
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: 'web/package-lock.json'
+    
+    - name: Install frontend dependencies
+      run: |
+        cd web
+        npm ci
+    
+    - name: Lint frontend
+      run: |
+        cd web
+        npm run lint || true  # Don't fail on lint errors for now
+    
+    - name: Build frontend
+      run: |
+        cd web
+        npm run build
+    
+    - name: Test frontend build
+      run: |
+        cd web
+        test -d dist && echo "✅ Frontend build successful"
+
+  build-containers:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build and push container images
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        # Services that use container images
+        SERVICES=("tiler" "radar-prepare" "goes-prepare" "mrms-prepare" "alerts-bake")
+        
+        for service in "${SERVICES[@]}"; do
+          if [ -f "services/$service/Dockerfile" ]; then
+            echo "Building $service..."
+            
+            ECR_REPO="atmosinsight-$service"
+            
+            docker buildx build \
+              --platform linux/amd64 \
+              --push \
+              --tag $ECR_REGISTRY/$ECR_REPO:latest \
+              --tag $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG \
+              services/$service/
+              
+            echo "✅ Built and pushed $service"
+          else
+            echo "⚠️ No Dockerfile found for $service"
+          fi
+        done
+
+  deploy-infrastructure:
+    runs-on: ubuntu-latest
+    needs: [test, build-containers]
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ~1.5
+        terraform_wrapper: false
+    
+    - name: Terraform Init
+      run: |
+        cd infra/terraform
+        terraform init
+    
+    - name: Terraform Plan
+      run: |
+        cd infra/terraform
+        terraform plan -var-file=env/us-east-1.tfvars -out=tfplan
+    
+    - name: Terraform Apply
+      run: |
+        cd infra/terraform
+        terraform apply -auto-approve tfplan
+    
+    - name: Get deployment outputs
+      id: tf-outputs
+      run: |
+        cd infra/terraform
+        CLOUDFRONT_ID=$(terraform output -raw cloudfront_distribution_id)
+        STATIC_BUCKET=$(terraform output -raw static_bucket_name)
+        
+        echo "cloudfront_id=$CLOUDFRONT_ID" >> $GITHUB_OUTPUT
+        echo "static_bucket=$STATIC_BUCKET" >> $GITHUB_OUTPUT
+
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    needs: deploy-infrastructure
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: 'web/package-lock.json'
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Build frontend
+      run: |
+        cd web
+        npm ci
+        npm run build
+    
+    - name: Deploy to S3
+      run: |
+        # Upload built frontend
+        aws s3 sync web/dist/ s3://${{ needs.deploy-infrastructure.outputs.static_bucket }}/ \
+          --exclude "*.map" \
+          --cache-control "public, max-age=86400" \
+          --metadata-directive REPLACE
+        
+        # Upload static assets if they exist
+        if [ -d "web-static" ]; then
+          aws s3 sync web-static/ s3://${{ needs.deploy-infrastructure.outputs.static_bucket }}/ \
+            --cache-control "public, max-age=31536000" \
+            --metadata-directive REPLACE
+        fi
+    
+    - name: Invalidate CloudFront
+      run: |
+        aws cloudfront create-invalidation \
+          --distribution-id ${{ needs.deploy-infrastructure.outputs.cloudfront_id }} \
+          --paths "/*" \
+          --query 'Invalidation.{Id:Id,Status:Status}' \
+          --output table
+
+  health-check:
+    runs-on: ubuntu-latest
+    needs: deploy-frontend
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - name: Wait for deployment
+      run: sleep 30
+    
+    - name: Health check
+      run: |
+        HEALTH_URL="https://weather.westfam.media/healthz"
+        
+        echo "Checking health endpoint: $HEALTH_URL"
+        
+        for i in {1..5}; do
+          if curl -f -s "$HEALTH_URL" | jq -e '.ok == true' > /dev/null; then
+            echo "✅ Health check passed!"
+            exit 0
+          else
+            echo "❌ Health check failed, attempt $i/5"
+            sleep 10
+          fi
+        done
+        
+        echo "❌ Health check failed after 5 attempts"
+        exit 1
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [health-check]
+    if: always() && github.ref == 'refs/heads/main'
+    steps:
+    - name: Notify deployment status
+      run: |
+        if [ "${{ needs.health-check.result }}" == "success" ]; then
+          echo "🎉 AtmosInsight deployment successful!"
+          echo "🌐 Application: https://weather.westfam.media"
+          echo "📊 Status: https://weather.westfam.media/status.html"
+        else
+          echo "❌ AtmosInsight deployment failed!"
+          echo "Check the workflow logs for details."
+        fi

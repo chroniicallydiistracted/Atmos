@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+*.pyc
+__pycache__/
+*.egg-info/
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.production
+*.tfvars
+!*.tfvars.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Logs
+*.log
+logs/
+
+# Runtime
+.coverage
+*.pid
+*.seed
+*.pid.lock
+
+# Large data files
+*.mbtiles
+*.pmtiles
+basemaps/
+*.tif
+*.nc
+*.grib2
+
+# AWS
+.aws/
+
+# Temporary files
+tmp/
+temp/
+.tmp/
