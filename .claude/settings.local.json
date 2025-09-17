@@ -15,8 +15,7 @@
       "Bash(./scripts/deploy/build-and-push-containers.sh:*)",
       "Bash(docker:*)",
       "Bash(terraform:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

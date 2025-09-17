@@ -22,8 +22,6 @@ build/
 *.swp
 *.swo
 *~
-aws
-awscliv2.zip
 
 # OS
 .DS_Store
