@@ -18,7 +18,8 @@ build/
 CyclOSM-CSS-Master
 services/cyclosm
 infra/terraform/services/cyclosm
-
+data
+awscliv2.zip
 
 # IDE
 .vscode/
