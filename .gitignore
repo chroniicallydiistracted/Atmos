@@ -15,6 +15,10 @@ build/
 .env.production
 *.tfvars
 !*.tfvars.example
+CyclOSM-CSS-Master
+services/cyclosm
+infra/terraform/services/cyclosm
+
 
 # IDE
 .vscode/

@@ -46,6 +46,8 @@ An AWS-native, living atlas of the atmosphere and near-space. AtmosInsight aggre
 
 ## 🚀 Quick Start
 
+> **Local rebuild in progress:** See `local/README.md` for the new local-first architecture. The root stack described below reflects the original AWS-oriented implementation and remains for reference until the migration completes.
+
 ### Prerequisites
 
 ```bash

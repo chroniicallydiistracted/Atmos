@@ -1,0 +1,16 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    { "Sid": "ListBucket",
+      "Effect": "Allow",
+      "Action": [ "s3:ListBucket" ],
+      "Resource": "arn:aws:s3:::atmosinsight-derived-b3b4a946",
+      "Condition": { "StringLike": { "s3:prefix": [ "basemaps/*" ] } }
+    },
+    { "Sid": "GetPutObjects",
+      "Effect": "Allow",
+      "Action": [ "s3:GetObject", "s3:PutObject" ],
+      "Resource": "arn:aws:s3:::atmosinsight-derived-b3b4a946/basemaps/*"
+    }
+  ]
+}

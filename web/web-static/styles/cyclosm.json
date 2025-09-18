@@ -1,0 +1,39 @@
+{
+  "version": 8,
+  "name": "CyclOSM AtmosInsight",
+  "metadata": {
+    "mapbox:type": "template",
+    "mapbox:autocomposite": true
+  },
+  "sources": {
+    "osm-vector": {
+      "type": "vector",
+      "url": "pmtiles://./basemaps/planet.z15.pmtiles"
+    },
+    "cyclosm-raster": {
+      "type": "raster",
+      "tiles": ["http://localhost:8080/tiles/cyclosm/{z}/{x}/{y}.png"],
+      "tileSize": 256,
+      "maxzoom": 18
+    }
+  },
+  "sprite": "./sprites/cyclosm/cyclosm",
+  "glyphs": "./fonts/{fontstack}/{range}.pbf",
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": {
+        "background-color": "#f8f4f0"
+      }
+    },
+    {
+      "id": "cyclosm-basemap",
+      "type": "raster",
+      "source": "cyclosm-raster",
+      "paint": {
+        "raster-opacity": 1
+      }
+    }
+  ]
+}

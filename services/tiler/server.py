@@ -133,8 +133,9 @@ async def weather_tiles(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Tile generation failed: {str(e)}")
 
-# Health check endpoint
+# Health check endpoints (direct and via Caddy /tiles/* route)
 @app.get("/healthz")
+@app.get("/tiles/healthz")
 async def health_check():
     return {"status": "healthy", "service": "titiler"}
 

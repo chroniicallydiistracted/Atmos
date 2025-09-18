@@ -1,0 +1,43 @@
+{
+  email {$PROXY_EMAIL}
+}
+
+weather.local {
+  # Health
+  handle /healthz {
+    reverse_proxy http://api:8081
+  }
+
+  # API
+  handle_path /api/* {
+    reverse_proxy http://api:8081
+  }
+
+  # Tiles
+  handle_path /tiles/* {
+    reverse_proxy http://tiler:8083
+  }
+
+  # MinIO Console/API passthrough (if needed)
+  handle_path /object-store/* {
+    reverse_proxy http://object-store:9000
+  }
+
+  # Serve PMTiles statically
+  handle_path /basemaps/* {
+    header {
+      Access-Control-Allow-Origin  *
+      Access-Control-Allow-Methods "GET, HEAD, OPTIONS"
+      Access-Control-Allow-Headers "Content-Type, Range, Authorization"
+      Access-Control-Expose-Headers "Content-Length, Content-Range"
+    }
+    root * /srv/basemaps
+    file_server browse
+  }
+
+  # Fallback to frontend
+  handle {
+    reverse_proxy http://frontend:4173
+  }
+}
+
