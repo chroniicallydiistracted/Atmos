@@ -1,5 +1,5 @@
 boto3>=1.26.0
-pyart>=1.15.0
+arm_pyart>=1.15.0
 xarray>=2023.1.0
 numpy>=1.24.0
 netcdf4>=1.6.0

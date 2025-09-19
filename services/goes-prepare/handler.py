@@ -6,7 +6,9 @@ import json
 import os
 import tempfile
 import boto3
+from botocore.client import BaseClient
 from datetime import datetime, timedelta
+from typing import Any, Dict, Optional, Tuple
 import xarray as xr
 import numpy as np
 import rasterio
@@ -42,13 +44,29 @@ def lambda_handler(event, context):
             time_param = event.get('time', 'latest')
         
         logger.info(f"Processing GOES ABI Band {band}, Sector {sector}, Time {time_param}")
-        
+
+        source_bucket = os.getenv('GOES_SOURCE_BUCKET', 'noaa-goes16')
+        source_client = boto3.client('s3', region_name='us-east-1')
+        derived_client = boto3.client('s3')
+        derived_bucket = os.getenv('DERIVED_BUCKET_NAME')
+
         # Find the target timestamp
         if time_param == 'latest':
-            target_time, goes_file_key = find_latest_goes_data(band, sector)
+            target_time, goes_file_key = find_latest_goes_data(
+                band,
+                sector,
+                bucket=source_bucket,
+                s3_client=source_client,
+            )
         else:
             target_time = datetime.fromisoformat(time_param.replace('Z', '+00:00'))
-            goes_file_key = find_goes_file_for_time(band, sector, target_time)
+            goes_file_key = find_goes_file_for_time(
+                band,
+                sector,
+                target_time,
+                bucket=source_bucket,
+                s3_client=source_client,
+            )
         
         if not target_time or not goes_file_key:
             return {
@@ -58,7 +76,16 @@ def lambda_handler(event, context):
             }
         
         # Process the GOES file
-        result = process_goes_file(band, sector, target_time, goes_file_key)
+        result = process_goes_file(
+            band,
+            sector,
+            target_time,
+            goes_file_key,
+            source_bucket=source_bucket,
+            source_s3_client=source_client,
+            derived_s3_client=derived_client,
+            derived_bucket=derived_bucket,
+        )
         
         return {
             'statusCode': 200,
@@ -80,10 +107,15 @@ def lambda_handler(event, context):
             'body': json.dumps({'error': str(e)})
         }
 
-def find_latest_goes_data(band, sector):
-    """Find the most recent GOES ABI file in the AWS Open Data bucket."""
-    s3 = boto3.client('s3', region_name='us-east-1')
-    goes_bucket = 'noaa-goes16'  # GOES-East AWS Open Data
+def find_latest_goes_data(
+    band: int,
+    sector: str,
+    *,
+    bucket: str = 'noaa-goes16',
+    s3_client: Optional[BaseClient] = None,
+) -> Tuple[Optional[datetime], Optional[str]]:
+    """Find the most recent GOES ABI file in the specified bucket."""
+    s3 = s3_client or boto3.client('s3', region_name='us-east-1')
     
     # Look back up to 4 hours for latest data
     now = datetime.utcnow()
@@ -101,7 +133,7 @@ def find_latest_goes_data(band, sector):
         
         try:
             response = s3.list_objects_v2(
-                Bucket=goes_bucket,
+                Bucket=bucket,
                 Prefix=prefix,
                 MaxKeys=20
             )
@@ -133,10 +165,16 @@ def find_latest_goes_data(band, sector):
     logger.warning("No recent GOES data found")
     return None, None
 
-def find_goes_file_for_time(band, sector, target_time):
+def find_goes_file_for_time(
+    band: int,
+    sector: str,
+    target_time: datetime,
+    *,
+    bucket: str = 'noaa-goes16',
+    s3_client: Optional[BaseClient] = None,
+) -> Optional[str]:
     """Find GOES file for specific timestamp."""
-    s3 = boto3.client('s3')
-    goes_bucket = 'noaa-goes16'
+    s3 = s3_client or boto3.client('s3', region_name='us-east-1')
     
     # Search around target time (±1 hour)
     for minutes_offset in [-30, 0, 30]:
@@ -150,7 +188,7 @@ def find_goes_file_for_time(band, sector, target_time):
         
         try:
             response = s3.list_objects_v2(
-                Bucket=goes_bucket,
+                Bucket=bucket,
                 Prefix=prefix,
                 MaxKeys=50
             )
@@ -213,12 +251,23 @@ def extract_goes_timestamp(filename):
         logger.debug(f"Failed to parse GOES timestamp from {filename}: {e}")
         return None
 
-def process_goes_file(band, sector, timestamp, goes_file_key):
+def process_goes_file(
+    band: int,
+    sector: str,
+    timestamp: datetime,
+    goes_file_key: str,
+    *,
+    source_bucket: str = 'noaa-goes16',
+    source_s3_client: Optional[BaseClient] = None,
+    derived_s3_client: Optional[BaseClient] = None,
+    derived_bucket: Optional[str] = None,
+) -> Dict[str, Any]:
     """Download and process GOES ABI file to COG."""
-    s3_client = boto3.client('s3')
-    derived_bucket = os.getenv('DERIVED_BUCKET_NAME')
-    
-    if not derived_bucket:
+    source_client = source_s3_client or boto3.client('s3', region_name='us-east-1')
+    derived_client = derived_s3_client or boto3.client('s3')
+    target_bucket = derived_bucket or os.getenv('DERIVED_BUCKET_NAME')
+
+    if not target_bucket:
         raise ValueError("DERIVED_BUCKET_NAME environment variable not set")
     
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -226,7 +275,7 @@ def process_goes_file(band, sector, timestamp, goes_file_key):
         nc_file = os.path.join(temp_dir, 'goes_abi.nc')
         
         logger.info(f"Downloading GOES file: {goes_file_key}")
-        s3_client.download_file('noaa-goes16', goes_file_key, nc_file)
+        source_client.download_file(source_bucket, goes_file_key, nc_file)
         
         # Read GOES ABI NetCDF with xarray
         logger.info("Reading GOES ABI NetCDF file")
@@ -396,9 +445,9 @@ def process_goes_file(band, sector, timestamp, goes_file_key):
             
             # Upload COG
             cog_file.seek(0)
-            s3_client.upload_fileobj(
+            derived_client.upload_fileobj(
                 cog_file,
-                derived_bucket,
+                target_bucket,
                 cog_key,
                 ExtraArgs={
                     'ContentType': 'image/tiff',
@@ -431,15 +480,15 @@ def process_goes_file(band, sector, timestamp, goes_file_key):
             'caveats': ['Reprojection artifacts possible at edge of coverage']
         }
         
-        s3_client.put_object(
-            Bucket=derived_bucket,
+        derived_client.put_object(
+            Bucket=target_bucket,
             Key=meta_key,
             Body=json.dumps(metadata, indent=2),
             ContentType='application/json'
         )
         
         # Update timeline index
-        update_goes_timeline_index(s3_client, derived_bucket, timestamp_str, band, sector)
+        update_goes_timeline_index(derived_client, target_bucket, timestamp_str, band, sector)
         
         logger.info("Successfully processed GOES ABI data")
         

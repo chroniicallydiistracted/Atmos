@@ -66,13 +66,17 @@ services:
       retries: 10
 
   ingestion:
-    build: ./services/ingestion
+    build:
+      context: ..
+      dockerfile: local/services/ingestion/Dockerfile
     env_file: ./config/.env
     volumes:
-      - ./services/ingestion/src:/app/src
+      - ./services/ingestion/src:/app/local/services/ingestion/src
       - ./data/raw:/data/raw
     depends_on:
       - object-store
+    ports:
+      - "8084:8084"
     restart: unless-stopped
     profiles: ["ingestion"]
 
@@ -81,11 +85,11 @@ services:
     env_file: ./config/.env
     volumes:
       - ./services/basemap/src:/app/src
-      - ./data/basemaps:/data/basemaps
+      - ./data/basemaps:/app/data
     depends_on:
       - postgres
     ports:
-      - "8082:8080"
+      - "8082:8082"
     restart: unless-stopped
 
   api:
@@ -98,6 +102,8 @@ services:
         condition: service_healthy
     ports:
       - "8081:8081"
+    volumes:
+      - ./services/api/src:/app/src
     restart: unless-stopped
     profiles: ["core"]
 
@@ -118,6 +124,17 @@ services:
       - api
     ports:
       - "4173:4173"
+    volumes:
+      - ./services/frontend/src:/app/src
+      - ./services/frontend/index.html:/app/index.html
+      - ./services/frontend/vite.config.ts:/app/vite.config.ts
+      - ./services/frontend/tsconfig.json:/app/tsconfig.json
+      - ./services/frontend/tsconfig.node.json:/app/tsconfig.node.json
+      - ./services/frontend/vitest.setup.ts:/app/vitest.setup.ts
+      - ./services/frontend/package.json:/app/package.json
+      - ./services/frontend/public:/app/public
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "4173"]
+    profiles: ["frontend"]
     restart: unless-stopped
 
   monitoring:

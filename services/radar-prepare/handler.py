@@ -6,6 +6,7 @@ import json
 import os
 import tempfile
 import boto3
+from botocore.client import BaseClient
 from datetime import datetime, timedelta
 import numpy as np
 import pyart
@@ -72,9 +73,16 @@ def lambda_handler(event, context):
             'body': json.dumps({'error': str(e)})
         }
 
-def find_nexrad_file(site, target_time):
-    """Find the closest NEXRAD Level II file in AWS Open Data."""
-    s3 = boto3.client('s3', region_name='us-east-1')
+def find_nexrad_file(site, target_time, s3_client: BaseClient | None = None):
+    """Find the closest NEXRAD Level II file in AWS Open Data.
+
+    Args:
+        site: Four letter radar site identifier (e.g. ``KTLX``).
+        target_time: Desired observation timestamp (naive UTC ``datetime``).
+        s3_client: Optional boto3 S3 client. When omitted the default
+            ``us-east-1`` client is created which targets AWS Open Data.
+    """
+    s3 = s3_client or boto3.client('s3', region_name='us-east-1')
     nexrad_bucket = 'noaa-nexrad-level2'
     
     # NEXRAD file structure: YYYY/MM/DD/SITE/
@@ -133,16 +141,29 @@ def find_nexrad_file(site, target_time):
         logger.error(f"Error searching for NEXRAD file: {e}")
         return None, None
 
-def process_nexrad_file(site, target_time):
-    """Download and process NEXRAD Level II file to COG."""
-    s3_client = boto3.client('s3')
-    derived_bucket = os.getenv('DERIVED_BUCKET_NAME')
-    
-    if not derived_bucket:
+def process_nexrad_file(
+    site,
+    target_time,
+    *,
+    source_s3_client: BaseClient | None = None,
+    derived_s3_client: BaseClient | None = None,
+    derived_bucket: str | None = None,
+):
+    """Download and process NEXRAD Level II file to COG.
+
+    Parameters mirror the legacy Lambda implementation but now support dependency
+    injection so alternative storage backends (e.g. MinIO) can be supplied when
+    running outside AWS.
+    """
+    derived_client = derived_s3_client or boto3.client('s3')
+    source_client = source_s3_client or boto3.client('s3', region_name='us-east-1')
+    derived_bucket_name = derived_bucket or os.getenv('DERIVED_BUCKET_NAME')
+
+    if not derived_bucket_name:
         raise ValueError("DERIVED_BUCKET_NAME environment variable not set")
-    
+
     # Find the NEXRAD file
-    nexrad_key, time_diff = find_nexrad_file(site, target_time)
+    nexrad_key, time_diff = find_nexrad_file(site, target_time, s3_client=source_client)
     
     if not nexrad_key:
         raise FileNotFoundError(f"No NEXRAD Level II data found for {site} near {target_time}")
@@ -156,7 +177,7 @@ def process_nexrad_file(site, target_time):
         nexrad_file = os.path.join(temp_dir, 'nexrad.gz')
         
         logger.info(f"Downloading NEXRAD file: {nexrad_key}")
-        s3_client.download_file('noaa-nexrad-level2', nexrad_key, nexrad_file)
+        source_client.download_file('noaa-nexrad-level2', nexrad_key, nexrad_file)
         
         # Process with Py-ART
         logger.info("Processing NEXRAD file with Py-ART")
@@ -260,16 +281,16 @@ def process_nexrad_file(site, target_time):
             
             # Upload COG
             cog_file.seek(0)
-            s3_client.upload_fileobj(
+            derived_client.upload_fileobj(
                 cog_file,
-                derived_bucket,
+                derived_bucket_name,
                 cog_key,
                 ExtraArgs={
                     'ContentType': 'image/tiff',
                     'CacheControl': 'public, max-age=3600'
                 }
             )
-        
+
         # Create and upload metadata
         actual_time = extract_actual_time_from_file(nexrad_key) or target_time
         
@@ -296,8 +317,8 @@ def process_nexrad_file(site, target_time):
             'caveats': ['Polar to Cartesian interpolation artifacts possible near radar']
         }
         
-        s3_client.put_object(
-            Bucket=derived_bucket,
+        derived_client.put_object(
+            Bucket=derived_bucket_name,
             Key=meta_key,
             Body=json.dumps(metadata, indent=2),
             ContentType='application/json'

@@ -15,25 +15,25 @@ This plan breaks the rebuild into incremental milestones. Each milestone deliver
 - [ ] Document backup strategy (restic/rsync) and smoke-test manual snapshot.
 
 ## Milestone 2 – Ingestion Foundation
-- [ ] Scaffold FastAPI-based ingestion service with shared FetchWithRetry.
-- [ ] Implement GOES pipeline end-to-end (download ➜ COG ➜ MinIO ➜ metadata).
+- [x] Scaffold FastAPI-based ingestion service with shared S3 client helpers.
+- [x] Implement GOES pipeline end-to-end (download ➜ COG ➜ MinIO ➜ metadata).
 - [ ] Add scheduling via APScheduler; confirm idempotency.
 - [ ] Write unit/integration tests against MinIO (compose profile `ingestion`).
 
 ## Milestone 3 – Basemap Pipeline
 - [ ] Create PostGIS import workflow (`services/database-import`).
-- [ ] Port CyclOSM renderer into `services/basemap` with local font bundle.
-- [ ] Add tile caching strategy (filesystem → MinIO optional).
-- [ ] Expose renderer health + metrics endpoints.
+- [x] Serve CyclOSM PMTiles via `local/services/basemap` with local range-enabled API.
+- [x] Provide basemap health endpoint and dataset listing.
+- [ ] Add tile generation/rendering path for locally generated raster tiles.
 
 ## Milestone 4 – API Gateway
-- [ ] Decide stack (FastAPI vs. NestJS). Prototype minimal `/healthz` endpoint.
-- [ ] Implement timeline endpoints reading from MinIO/Postgres.
+- [x] Decide stack (FastAPI). Prototype minimal `/healthz` endpoint.
+- [x] Implement timeline endpoints reading from MinIO/Postgres.
 - [ ] Add trigger endpoints secured via API key or mTLS.
-- [ ] Define OpenAPI spec and publish to `docs/api-contract.md`.
+- [x] Define OpenAPI spec draft and publish to `docs/api-contract.md`.
 
 ## Milestone 5 – Frontend Refresh
-- [ ] Scaffold Vite project, integrate MapLibre with local basemap + PMTiles protocol.
+- [x] Scaffold Vite project and core dashboard shell (MapLibre integration pending).
 - [ ] Connect to new API endpoints for timeline/state.
 - [ ] Implement playback UI, layer toggles, and stale-data indicators.
 - [ ] Add Playwright/Cypress smoke tests.
@@ -57,4 +57,3 @@ This plan breaks the rebuild into incremental milestones. Each milestone deliver
 - [ ] Post-cutover monitoring and documentation updates.
 
 Use this plan as the canonical roadmap. Update checkboxes and notes as milestones progress.
-

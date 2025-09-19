@@ -47,6 +47,7 @@ logs/
 *.pid
 *.seed
 *.pid.lock
+.venv/
 
 # Large data files
 *.mbtiles

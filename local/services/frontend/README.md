@@ -2,12 +2,27 @@
 
 New Vite + React frontend configured for local APIs and tiles. Do not reuse the production-oriented configuration from the legacy repo directly.
 
-## Goals
-- Use environment variables from `config/.env` (VITE_API_BASE, VITE_TILE_BASE).
-- Incorporate MapLibre + PMTiles protocol with local basemap.
-- Provide development server (`npm run dev`) and static build served via `docker compose`.
+## Current capabilities
+- Vite + React 18 scaffold with React Query, React Router, and typed API hooks.
+- Single-screen basemap experience powered by MapLibre + CyclOSM, loading tiles from the local PMTiles service.
+- Top bar with health indicator and coordinate-based recenter control for quick navigation.
+- Vitest + Testing Library smoke test that verifies the basemap shell renders (MapLibre mocked for unit tests).
 
-## TODO
-- Scaffold fresh Vite project inside `src/`.
-- Copy validated UI components only after they are refit to the new API contract.
-- Add integration tests with Playwright or Cypress targeting local stack.
+## Usage
+
+```bash
+cd local/services/frontend
+npm install
+npm run dev        # starts Vite dev server on http://localhost:5173
+npm run build      # emits production assets to dist/
+npm run preview    # serves the built assets on http://localhost:4173
+npm test           # run vitest suite
+```
+
+Environment variables (`VITE_API_BASE`, `VITE_TILE_BASE`) are injected via
+`local/config/.env`. The Docker image runs `npm run preview` by default.
+
+## Next steps
+- Re-introduce weather overlays (radar, satellite, alerts, lightning) once their data services are ready.
+- Add timeline controls after ingestion backfills expose usable frame sequences.
+- Layer on Playwright/puppeteer checks for end-to-end validation against the running local stack.

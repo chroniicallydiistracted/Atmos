@@ -1,6 +1,7 @@
 # Run the Core Slice
 
 This brings up: Caddy (reverse-proxy), MinIO, Postgres, API. Buckets are auto-created by `object-store-init`.
+For the full stack including ingestion + frontend see `local/docs/run-dev.md`.
 
 ## Prereqs
 - Docker + Docker Compose
@@ -20,9 +21,9 @@ docker compose -f local/docker-compose.yml --profile core logs -f api object-sto
 
 # test healthz
 # If weather.local doesn't resolve, add to /etc/hosts: `127.0.0.1 weather.local`
-curl -s http://weather.local/healthz | jq .
+curl -s http://weather.local/v1/healthz | jq .
 # alternatively direct port:
-curl -s http://localhost:8081/healthz | jq .
+curl -s http://localhost:8081/v1/healthz | jq .
 
 # MinIO console
 # http://localhost:9090  (user=localminio, pass=change-me-now)

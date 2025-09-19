@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import maplibregl, { Map, NavigationControl } from 'maplibre-gl'
+import maplibregl, { Map, NavigationControl, StyleSpecification } from 'maplibre-gl'
 import { Protocol } from 'pmtiles'
 import { useLayerStore } from '../store/layerStore'
 import { useTimeStore } from '../store/timeStore'
@@ -15,47 +15,65 @@ export default function MapView() {
   useEffect(() => {
     if (!containerRef.current) return
 
-    // Set up PMTiles protocol for CyclOSM basemap
     const protocol = new Protocol()
     maplibregl.addProtocol('pmtiles', protocol.tile)
 
-    // Initialize the map
-    const map = new maplibregl.Map({
-      container: containerRef.current,
-      style: styleUrl,
-      center: [-98.5, 39.5], // Center on CONUS
-      zoom: 4,
-      hash: true,
-      attributionControl: true,
-      maxZoom: 15,
-      minZoom: 3
-    })
+    const abortController = new AbortController()
+    let disposed = false
 
-    // Add navigation control
-    map.addControl(new NavigationControl({ visualizePitch: true }), 'top-right')
+    const initializeMap = async () => {
+      try {
+        const response = await fetch(styleUrl, { signal: abortController.signal })
+        if (!response.ok) {
+          throw new Error(`Failed to load style: ${response.status} ${response.statusText}`)
+        }
 
-    // Store map reference
-    mapRef.current = map
+        const styleJson = (await response.json()) as StyleSpecification
+        const preparedStyle = prepareStyle(styleJson, response.url)
 
-    // Handle map load
-    map.on('load', () => {
-      console.log('Map loaded successfully')
-      
-      // Add weather data sources and layers
-      addWeatherLayers(map)
-    })
+        if (disposed || !containerRef.current) {
+          return
+        }
 
-    // Handle map errors
-    map.on('error', (e) => {
-      console.error('Map error:', e.error)
-    })
+        const map = new maplibregl.Map({
+          container: containerRef.current,
+          style: preparedStyle,
+          center: [-98.5, 39.5], // Center on CONUS
+          zoom: 4,
+          hash: true,
+          attributionControl: true,
+          maxZoom: 15,
+          minZoom: 3
+        })
 
-    // Cleanup function
+        map.addControl(new NavigationControl({ visualizePitch: true }), 'top-right')
+        mapRef.current = map
+
+        map.on('load', () => {
+          console.log('Map loaded successfully')
+          addWeatherLayers(map)
+        })
+
+        map.on('error', (e) => {
+          console.error('Map error:', e.error)
+        })
+      } catch (error) {
+        if ((error as DOMException).name === 'AbortError') return
+        console.error('Failed to initialize map', error)
+      }
+    }
+
+    void initializeMap()
+
     return () => {
+      disposed = true
+      abortController.abort()
+
       if (mapRef.current) {
         mapRef.current.remove()
         mapRef.current = null
       }
+
       maplibregl.removeProtocol('pmtiles')
     }
   }, [])
@@ -202,5 +220,58 @@ function updateTemporalLayers(map: Map, currentTime: string) {
       tile.replace('{timestampPlaceholder}', currentTime)
     )
     alertsSource.setTiles(newAlertsTiles)
+  }
+}
+
+function prepareStyle(style: StyleSpecification, styleUrl: string): StyleSpecification {
+  const prepared = JSON.parse(JSON.stringify(style)) as StyleSpecification
+  const vectorSource = prepared.sources?.openmaptiles
+
+  if (vectorSource && typeof vectorSource === 'object' && 'url' in vectorSource) {
+    const envUrl = normalizePmtilesUrl(import.meta.env.VITE_BASEMAP_PM, window.location.href)
+    const defaultUrl = typeof vectorSource.url === 'string'
+      ? normalizePmtilesUrl(vectorSource.url, styleUrl)
+      : undefined
+
+    const resolvedUrl = envUrl ?? defaultUrl
+    if (resolvedUrl && typeof vectorSource.url === 'string') {
+      vectorSource.url = resolvedUrl
+    }
+  }
+
+  if (prepared.sprite) {
+    prepared.sprite = resolveAssetUrl(prepared.sprite, styleUrl)
+  }
+
+  if (prepared.glyphs) {
+    prepared.glyphs = resolveAssetUrl(prepared.glyphs, styleUrl)
+  }
+
+  return prepared
+}
+
+function resolveAssetUrl(path: string, base: string) {
+  try {
+    return new URL(path, base).toString()
+  } catch {
+    return path
+  }
+}
+
+function normalizePmtilesUrl(raw: string | undefined, base: string): string | undefined {
+  if (!raw) return undefined
+
+  const trimmed = raw.trim()
+  if (!trimmed) return undefined
+  if (trimmed.startsWith('pmtiles://')) return trimmed
+  if (trimmed.includes('://')) {
+    return `pmtiles://${trimmed}`
+  }
+
+  try {
+    const absolute = new URL(trimmed, base).toString()
+    return `pmtiles://${absolute}`
+  } catch {
+    return undefined
   }
 }
