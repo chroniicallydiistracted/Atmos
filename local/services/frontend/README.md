@@ -19,8 +19,10 @@ npm run preview    # serves the built assets on http://localhost:4173
 npm test           # run vitest suite
 ```
 
-Environment variables (`VITE_API_BASE`, `VITE_TILE_BASE`) are injected via
-`local/config/.env`. The Docker image runs `npm run preview` by default.
+Environment variables (`VITE_API_BASE`, `VITE_TILE_BASE`, `VITE_BASEMAP_PM`,
+`VITE_BASEMAP_BICYCLE_PM`, `VITE_BASEMAP_HILLSHADE_PM`) are injected via
+`local/config/.env`. All three PMTiles URLs must resolve for the basemap to
+render; the Docker image runs `npm run preview` by default.
 
 ## Next steps
 - Re-introduce weather overlays (radar, satellite, alerts, lightning) once their data services are ready.

@@ -7,5 +7,6 @@ Place reproducible automation scripts here:
 - `seed_postgres.py` – ensure placeholder tables/rows exist in Postgres for local experiments.
 - `test.sh` – run API + frontend unit tests (expects dependencies installed via pip/npm).
 - `dev-stack.sh` – convenience wrapper around docker compose for bringing the API, ingestion, and frontend services up/down.
+- `build-basemap-assets.sh` – generate the required bicycle overlay and hillshade PMTiles locally using osmium, tippecanoe, and GDAL tooling.
 
 Ensure every script is idempotent and documented at the top with usage examples.
