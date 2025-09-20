@@ -18,6 +18,23 @@ indicator + coordinate jump.
 smoke script (`scripts/check-basemap.cjs`) runs against `http://localhost:4173`
 so we can validate rendering after style tweaks.
 
+### Hosted Tile Shortcut (for exploration only)
+
+When you need a quick preview without the full PMTiles pipeline, you can point
+the frontend at CyclOSM’s public raster tiles. Set the following in
+`local/config/.env`:
+
+```
+VITE_CYCLOSM_TILE_TEMPLATE=https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png
+VITE_CYCLOSM_TILE_SUBDOMAINS=a,b,c
+```
+
+The map will switch to a hosted raster source, add the required
+“© OpenStreetMap contributors · CyclOSM” attribution, and keep the URL
+configurable (per the OpenStreetMap tile usage policy). This mode is for light
+development use only—disable it before shipping to production and fall back to
+our self-hosted PMTiles.
+
 ## Gaps vs. CyclOSM Reference
 
 1. **Bicycle network overlays** – The official style expects a
@@ -48,9 +65,11 @@ style verbatim and only patch the `sources`/URLs.
   ```
 * Convert to PMTiles with the expected layer name:
   ```bash
-  tippecanoe -o local/data/basemaps/cyclosm-bicycles.pmtiles \
+  tippecanoe -o local/data/basemaps/cyclosm-bicycle.pmtiles \
     --layer=bicycle_routes --no-tile-compression \
     --simplification=4 --maximum-zoom=14 bicycle_routes.osm.pbf
+  # Docker-based pipeline (filters + tiles + convert)
+  ./local/scripts/build-cyclosm-bicycle.sh --planet /path/to/planet.osm.pbf
   ```
   *For CONUS-only builds, filter on a bounding box to keep the file small.*
 * (Optional) run additional extracts for landcover tags that are missing in
@@ -62,7 +81,7 @@ style verbatim and only patch the `sources`/URLs.
     "osm": { ... },
     "cyclosm-bicycle": {
       "type": "vector",
-      "url": "pmtiles://./basemaps/cyclosm-bicycles.pmtiles"
+      "url": "pmtiles://./basemaps/cyclosm-bicycle.pmtiles"
     }
   }
   ```
@@ -113,6 +132,7 @@ ourselves (see `services/cyclosm/fonts` for the subset manifest).
 | 2025-09-17 | Initial MapLibre shell & PMTiles wiring (`BasemapView`, `MapStateProvider`)            |
 | 2025-09-18 | UI trimmed to basemap-only experience; sprites copied to `public/sprites/cyclosm/`    |
 | 2025-09-19 | Style palette aligned with CyclOSM colors; farmland / parks / forests / water tuned    |
+| 2025-09-19 | Added automated bicycle overlay builder + frontend integration (build-cyclosm-bicycle.sh) |
 | 2025-09-19 | Added Puppeteer smoke script (`scripts/check-basemap.cjs`) for automated screenshots    |
 
 Keep this document updated as we add overlays and hillshade so we always know

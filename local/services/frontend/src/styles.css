@@ -36,7 +36,34 @@ body {
 }
 
 .basemap-view .maplibregl-control-container {
-  display: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.basemap-view .maplibregl-ctrl-bottom-right {
+  margin: 0 0.9rem 0.9rem 0;
+}
+
+.basemap-view .maplibregl-ctrl-attrib {
+  pointer-events: auto;
+  font-size: 0.68rem;
+  background: rgba(15, 23, 42, 0.72);
+  border-radius: 0.75rem;
+  color: rgba(226, 232, 240, 0.92);
+  padding: 0.28rem 0.6rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 12px 32px rgba(2, 6, 23, 0.25);
+}
+
+.basemap-view .maplibregl-ctrl-attrib a {
+  color: rgba(94, 234, 212, 0.95);
+  text-decoration: none;
+}
+
+.basemap-view .maplibregl-ctrl-attrib a:hover {
+  text-decoration: underline;
 }
 
 .overlay-card {
@@ -92,25 +119,35 @@ body {
 .location-form {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  flex: 1;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+  background: rgba(15, 23, 42, 0.82);
+  border-radius: 999px;
+  padding: 0.35rem 0.5rem;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
 }
 
 .location-form input {
-  flex: 1;
+  width: 11.5rem;
   background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 0.75rem;
-  padding: 0.6rem 0.9rem;
-  color: inherit;
+  border: none;
+  border-radius: 999px;
+  padding: 0.35rem 0.65rem;
+  color: rgba(226, 232, 240, 0.92);
+  font-size: 0.85rem;
+}
+
+.location-form input::placeholder {
+  color: rgba(148, 163, 184, 0.75);
 }
 
 .location-form button {
-  background: #2563eb;
+  background: linear-gradient(135deg, #22d3ee, #2563eb);
   border: none;
   color: #f8fafc;
-  padding: 0.6rem 1.2rem;
-  border-radius: 0.75rem;
+  padding: 0.38rem 0.95rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
 }

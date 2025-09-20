@@ -1,6 +1,7 @@
 # Local Automation Scripts
 
 Place reproducible automation scripts here:
+- `build-cyclosm-bicycle.sh` – generate CyclOSM bicycle route PMTiles from an OSM PBF using Dockerized tools.
 - `bootstrap.sh` – install prerequisites, create directories, fetch fonts/data (TODO).
 - `backup.sh` – snapshot Postgres + MinIO.
 - `seed_minio.py` – populate the derived bucket with sample timeline entries for UI testing.

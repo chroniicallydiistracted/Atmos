@@ -20,8 +20,7 @@ docker compose -f local/docker-compose.yml --profile core up -d --build
 docker compose -f local/docker-compose.yml --profile core logs -f api object-store postgres reverse-proxy object-store-init
 
 # test healthz
-# If weather.local doesn't resolve, add to /etc/hosts: `127.0.0.1 weather.local`
-curl -s http://weather.local/v1/healthz | jq .
+curl -s http://localhost/api/v1/healthz | jq .
 # alternatively direct port:
 curl -s http://localhost:8081/v1/healthz | jq .
 

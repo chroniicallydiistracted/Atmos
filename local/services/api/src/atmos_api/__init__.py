@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import Settings
 from .deps import get_settings
-from .routers import health, timeline, triggers
+from .routers import health, timeline, triggers, legend
 
 
 def create_app() -> FastAPI:
@@ -25,6 +25,7 @@ def create_app() -> FastAPI:
     app.include_router(health.router)
     app.include_router(timeline.router)
     app.include_router(triggers.router)
+    app.include_router(legend.router)
 
     return app
 

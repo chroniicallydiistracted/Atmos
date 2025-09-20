@@ -1,4 +1,11 @@
-const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8081";
+// Derive API base. Prefer explicit VITE_API_BASE; fall back to same-origin '/api'.
+// If an explicit base is provided, strip trailing slash for consistent concatenation.
+const rawBase = (import.meta as any).env?.VITE_API_BASE as string | undefined;
+const API_BASE = (() => {
+  const fallback = "/api"; // served through reverse proxy -> backend API
+  if (!rawBase || rawBase.trim() === "") return fallback;
+  return rawBase.endsWith("/") ? rawBase.slice(0, -1) : rawBase;
+})();
 
 async function request<T>(path: string, options: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {

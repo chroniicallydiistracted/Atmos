@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Any, Dict, Literal, Optional, Union
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from .atmos_ingestion.config import IngestionSettings
@@ -15,6 +16,13 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(levelname)s %(name)s: %(message)s")
 
 app = FastAPI(title="Atmos Ingestion", version="0.1.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost", "http://localhost:4173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 settings = IngestionSettings()
 ingestion_service = IngestionService(settings)
 app.state.settings = settings

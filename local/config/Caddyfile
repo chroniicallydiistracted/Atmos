@@ -2,7 +2,7 @@
   email {$PROXY_EMAIL}
 }
 
-weather.local {
+http://localhost {
   # Health
   handle /healthz {
     reverse_proxy http://api:8081

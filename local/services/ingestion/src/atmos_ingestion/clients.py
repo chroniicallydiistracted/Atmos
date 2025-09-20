@@ -6,6 +6,7 @@ from typing import Optional
 import boto3
 from botocore.client import BaseClient
 from botocore.config import Config
+from botocore import UNSIGNED
 
 from .config import IngestionSettings
 
@@ -15,7 +16,7 @@ def build_source_s3_client(settings: IngestionSettings) -> BaseClient:
     return boto3.client(
         "s3",
         region_name=settings.nexrad_region,
-        config=Config(signature_version="s3v4", retries={"max_attempts": 5, "mode": "standard"}),
+        config=Config(signature_version=UNSIGNED, retries={"max_attempts": 5, "mode": "standard"}),
     )
 
 

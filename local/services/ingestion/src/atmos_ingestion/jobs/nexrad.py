@@ -56,10 +56,19 @@ class NexradIngestion:
             derived_s3_client=self._clients.derived,
             derived_bucket=self._settings.derived_bucket,
         )
-        result.update({
-            "site": resolved_site,
-            "requested_time": resolved_time.isoformat() + "Z",
-        })
+        # Enrich with convenience template fields for downstream tiling/UI
+        timestamp_key = result.get("timestamp_key") or result.get("actual_timestamp", "").replace(":", "")
+        # Provide a tile template (caller prefixes with TILE_BASE if needed)
+        tile_template = f"/tiles/weather/nexrad-{resolved_site}/{timestamp_key}/{{z}}/{{x}}/{{y}}.png"
+        meta_key = result.get("meta_key")
+        result.update(
+            {
+                "site": resolved_site,
+                "requested_time": resolved_time.isoformat() + "Z",
+                "tile_template": tile_template,
+                "meta_url": f"/object-store/{meta_key}" if meta_key else None,
+            }
+        )
         return result
 
 
