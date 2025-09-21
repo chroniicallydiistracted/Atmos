@@ -1,6 +1,18 @@
 """
-TiTiler ASGI app for AtmosInsight.
-Serves raster tiles from MinIO-hosted COGs with custom styling and caching.
+DEPRECATED / UNUSED ENTRYPOINT
+================================
+
+This `app.py` was an early experiment for exposing weather tiles at the route
+pattern `/weather/{dataset}/{timestamp}/{z}/{x}/{y}.png`.
+
+The active application served by the tiler container is defined in `server.py`,
+which mounts its routes under `/tiles/weather/...` so that the Caddy reverse
+proxy can preserve the `/tiles` prefix while forwarding.
+
+Keeping this file (rather than deleting) provides reference for earlier design
+but it is NOT imported or executed. Future changes should be made only in
+`server.py`. If/when historical reference is no longer needed, remove this file
+to avoid confusion.
 
 Notes:
 - No AWS SDKs or Lambda adapters are used.
@@ -40,7 +52,7 @@ async def cors_middleware(request: Request, call_next):
     return response
 
 # Custom route for AtmosInsight COGs from derived bucket (MinIO)
-@app.get("/tiles/weather/{dataset}/{timestamp}/{z}/{x}/{y}.png")
+@app.get("/weather/{dataset}/{timestamp}/{z}/{x}/{y}.png")
 async def weather_tiles(
     dataset: str,
     timestamp: str,
@@ -87,7 +99,8 @@ async def weather_tiles(
 
     elif dataset.startswith("nexrad-"):
         site = dataset.replace("nexrad-", "").upper()
-        s3_key = f"derived/nexrad/{site}/{timestamp}/tilt0_reflectivity.tif"
+        # Canonical NEXRAD layout (inside derived bucket): nexrad/<SITE>/<TIMESTAMP>/tilt0_reflectivity.tif
+        s3_key = f"nexrad/{site}/{timestamp}/tilt0_reflectivity.tif"
         default_rescale = "-30,80" if not rescale else rescale
 
     else:

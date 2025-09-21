@@ -34,7 +34,8 @@ echo TS_KEY=$TS_KEY SITE=$SITE META_URL=$META_URL TILE_TEMPLATE=$TILE_TEMPLATE
 List derived objects for this run:
 ```bash
 mc alias set local http://localhost:9000 localminio change-me-now >/dev/null 2>&1 || true
-mc ls local/derived/nexrad/${SITE}/${TS_KEY}/
+# NOTE: Legacy directory-style listing example (no longer produced by current pipeline). Retained ONLY for historical context.
+# mc ls local/derived/nexrad/${SITE}/${TS_KEY}/
 ```
 Expect at least:
 - `tilt0_reflectivity.tif`
@@ -81,7 +82,8 @@ fetch(`/api/v1/legend/nexrad/${SITE}/${TS_KEY}`).then(r=>r.json()).then(console.
 ## 9. Cleanup (Optional)
 Remove generated run to re-test fresh:
 ```bash
-mc rm -r --force local/derived/nexrad/${SITE}/${TS_KEY}
+# Legacy cleanup command (DO NOT USE in current canonical layout):
+# mc rm -r --force local/derived/nexrad/${SITE}/${TS_KEY}
 ```
 
 ---

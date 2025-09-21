@@ -7,6 +7,7 @@ Notes:
 - COGs are read via HTTP from the local MinIO endpoint (e.g., http://object-store:9000).
 """
 import os
+from datetime import timedelta
 from titiler.application.main import app
 from typing import Optional
 from fastapi import Request, HTTPException
@@ -87,7 +88,8 @@ async def weather_tiles(
 
     elif dataset.startswith("nexrad-"):
         site = dataset.replace("nexrad-", "").upper()
-        s3_key = f"derived/nexrad/{site}/{timestamp}/tilt0_reflectivity.tif"
+        # Canonical NEXRAD layout (inside derived bucket): nexrad/<SITE>/<TIMESTAMP>/tilt0_reflectivity.tif
+        s3_key = f"nexrad/{site}/{timestamp}/tilt0_reflectivity.tif"
         default_rescale = "-30,80" if not rescale else rescale
 
     else:
@@ -109,7 +111,7 @@ async def weather_tiles(
     object_name = s3_key
     try:
         # Default expiry 1 hour
-        http_url = client.presigned_get_object(derived_bucket, object_name, expires=3600)
+        http_url = client.presigned_get_object(derived_bucket, object_name, expires=timedelta(hours=1))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to sign COG URL: {str(e)}")
 
@@ -118,8 +120,11 @@ async def weather_tiles(
         # rio-tiler returns (data, mask) arrays
         with Reader(http_url) as src:
             rescale_vals = [tuple(map(float, default_rescale.split(",")))]
-            data, mask = src.tile(x, y, z, rescale=rescale_vals)
-            img_bytes = render(data, mask=mask, img_format="PNG")
+            data, mask = src.tile(x, y, z)
+            # Apply rescaling to convert float32 to uint8 for PNG
+            import numpy as np
+            data_scaled = np.clip((data - rescale_vals[0][0]) / (rescale_vals[0][1] - rescale_vals[0][0]) * 255, 0, 255).astype("uint8")
+            img_bytes = render(data_scaled, mask=mask, img_format="PNG")
 
             return Response(
                 content=img_bytes,
