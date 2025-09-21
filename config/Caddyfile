@@ -23,18 +23,6 @@ http://localhost {
     reverse_proxy http://object-store:9000
   }
 
-  # Serve PMTiles statically
-  handle_path /basemaps/* {
-    header {
-      Access-Control-Allow-Origin  *
-      Access-Control-Allow-Methods "GET, HEAD, OPTIONS"
-      Access-Control-Allow-Headers "Content-Type, Range, Authorization"
-      Access-Control-Expose-Headers "Content-Length, Content-Range"
-    }
-    root * /srv/basemaps
-    file_server browse
-  }
-
   # Fallback to frontend
   handle {
     reverse_proxy http://frontend:4173

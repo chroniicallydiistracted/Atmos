@@ -9,7 +9,6 @@ services:
       - ./config/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
-      - ./data/basemaps:/srv/basemaps:ro
     depends_on:
       - api
       - object-store
@@ -80,7 +79,6 @@ services:
     env_file: ./config/.env
     volumes:
       - ./services/basemap/src:/app/src
-      - ./data/basemaps:/app/data
     depends_on:
       - postgres
     ports:
