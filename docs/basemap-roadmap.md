@@ -13,6 +13,9 @@ CyclOSM palette to the OpenMapTiles planet archive: beige land background,
 park/forest/scrub/heath fills, farmland, water, and building tones match the
 reference color table from `CyclOSM-CSS`. The top bar still uses the health
 indicator + coordinate jump.
+* **Overlay integration** – `BasemapView` now requires dedicated bicycle and
+  hillshade PMTiles (`VITE_BASEMAP_BICYCLE_PM`, `VITE_BASEMAP_HILLSHADE_PM`);
+  startup fails fast if they are missing so we cannot ship an incomplete style.
 * **Self-hosted data** – MapLibre is reading our local
 `planet.z15.pmtiles` (47 GB). No external tile services are hit. A Puppeteer
 smoke script (`scripts/check-basemap.cjs`) runs against `http://localhost:4173`
@@ -37,13 +40,12 @@ our self-hosted PMTiles.
 
 ## Gaps vs. CyclOSM Reference
 
-1. **Bicycle network overlays** – The official style expects a
-`bicycle_routes` layer with LCN/RCN/NCN/ICN geometries. The stock OpenMapTiles
-planet archive does **not** ship this layer, so our map lacks the blue corridor
-network and route shields.
-2. **Relief / hillshade** – Raster shading and contour emphasis that give the
-CyclOSM raster tiles their 3D feel are absent. Our current vector-only style
-looks flat in mountainous terrain (Phoenix screenshot highlights this gap).
+1. **Bicycle network overlays** – The style wiring now mandates a
+`bicycle_routes` PMTiles overlay. We still need a repeatable extract pipeline so
+the dataset stays fresh and covers the desired extent.
+2. **Relief / hillshade** – Hillshade PMTiles are required in the style, but we
+need to finalize the DEM sourcing/processing workflow to keep the raster up to
+date and aligned with CyclOSM’s tonal balance.
 3. **Auxiliary landcover** – Items such as orchards, vineyards, protected
 areas, or farmland variants appear in the raster flavor thanks to custom SQL.
 We have the basic fills but still need to audit whether additional classes are
@@ -58,12 +60,14 @@ style verbatim and only patch the `sources`/URLs.
 
 ### 1. Generate Vector Overlays (bicycle network & optional landcover extras)
 
-* Extract cycle routes from the planet PBF:
+* Extract cycle routes from the planet PBF (see
+  `local/scripts/build-basemap-assets.sh --help` for automation):
   ```bash
   osmium tags-filter planet-latest.osm.pbf r/highway=cycleway \
     w/network=icn,rcn,lcn,ncn -o bicycle_routes.osm.pbf
   ```
-* Convert to PMTiles with the expected layer name:
+* Convert to PMTiles with the expected layer name (the frontend already targets
+  `cyclosm-bicycles.pmtiles`):
   ```bash
   tippecanoe -o local/data/basemaps/cyclosm-bicycle.pmtiles \
     --layer=bicycle_routes --no-tile-compression \
@@ -86,16 +90,17 @@ style verbatim and only patch the `sources`/URLs.
   }
   ```
   Then repoint the four `bicycleroutes-*` layers to `cyclosm-bicycle`.
-
+  
 ### 2. Hillshade / Relief Tiles
 
-* Use the helper under `services/cyclosm/hillshade/generate-hillshade.sh` to
-  bake SRTM/AW3D DEM data into raster tiles. Suggested workflow:
+* Use `local/scripts/build-basemap-assets.sh --hillshade-dem <path>` to
+  orchestrate GDAL hillshade generation. Suggested workflow:
   1. Download DEM for the region (e.g. USGS 1 arc-second).
   2. Run the script to produce Cloud-Optimized GeoTIFFs or WebP tiles.
   3. Convert to PMTiles (`pmtiles convert` for raster) and store as
      `local/data/basemaps/hillshade.pmtiles`.
-* Add a raster source to the style:
+* Add a raster source to the style (handled automatically; the frontend requires
+  `hillshade.pmtiles` to exist):
   ```json
   "hillshade": {
     "type": "raster",
@@ -117,7 +122,9 @@ produce contour vector tiles (e.g. via `gdal_contour` + tippecanoe) and add a
 * Mirror `cyclosm-basic-gl-style/style.json` into our repo and keep it pristine.
 * Maintain a small TypeScript/Node script that patches only the `sources`
   section (point to our PMTiles) and writes the runtime style MapLibre consumes.
-  That way future upstream updates are a simple rebase.
+  That way future upstream updates are a simple rebase. (Plumbing now exists via
+  `BasemapView` helpers, which require all PMTiles; we still need automation to
+  sync upstream JSON.)
 
 ### 5. Font Audit
 
@@ -134,6 +141,7 @@ ourselves (see `services/cyclosm/fonts` for the subset manifest).
 | 2025-09-19 | Style palette aligned with CyclOSM colors; farmland / parks / forests / water tuned    |
 | 2025-09-19 | Added automated bicycle overlay builder + frontend integration (build-cyclosm-bicycle.sh) |
 | 2025-09-19 | Added Puppeteer smoke script (`scripts/check-basemap.cjs`) for automated screenshots    |
+| 2025-09-20 | Overlay/hillshade PMTiles plumbing added; `build-basemap-assets.sh` scaffolds artefacts |
 
 Keep this document updated as we add overlays and hillshade so we always know
 how far we are from true CyclOSM parity.

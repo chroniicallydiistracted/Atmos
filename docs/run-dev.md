@@ -29,8 +29,10 @@ Services exposed (the frontend `.env` now targets these localhost ports by defau
 - Basemap PMTiles: http://localhost:8082/pmtiles
 - MinIO Console: http://localhost:9090 (user/password from `.env`)
 
-Copy PMTiles into `local/data/basemaps/` before starting the stack. With the
-default configuration the frontend should reference:
+Copy PMTiles into `local/data/basemaps/` before starting the stack. Run
+`./local/scripts/build-basemap-assets.sh` (or otherwise supply
+`cyclosm-bicycles.pmtiles` and `hillshade.pmtiles`) so the required overlay
+datasets are present. With the default configuration the frontend should reference:
 
 ```
 pmtiles://http://localhost:8082/pmtiles/planet.z15.pmtiles

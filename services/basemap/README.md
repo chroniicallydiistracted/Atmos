@@ -32,4 +32,7 @@ With the Docker compose stack:
 
 Place your `.pmtiles` datasets under `local/data/basemaps/` before starting the
 stack. The frontend expects to fetch `http://localhost:8082/pmtiles/planet.pmtiles`
-and uses the pmtiles protocol for MapLibre.
+and uses the pmtiles protocol for MapLibre. The bicycle network overlay and
+hillshade raster PMTiles **must** exist alongside the base dataset; generate them
+via `./local/scripts/build-basemap-assets.sh` which emits
+`cyclosm-bicycles.pmtiles` and `hillshade.pmtiles` into the same directory.
