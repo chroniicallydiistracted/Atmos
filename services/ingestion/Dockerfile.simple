@@ -31,20 +31,11 @@ ENV CPLUS_INCLUDE_PATH=/usr/include/gdal \
     C_INCLUDE_PATH=/usr/include/gdal \
     GDAL_CONFIG=/usr/bin/gdal-config
 
-# Install Python dependencies
-COPY requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r /app/requirements.txt
+# Create directories for mounted volumes
+RUN mkdir -p /app/src /app/services/radar-prepare /app/services/goes-prepare
 
-# Create service directories - the actual code will be mounted as volumes
-RUN mkdir -p /app/services/radar-prepare /app/services/goes-prepare /app/src
-
+# We'll install requirements when the container starts
 ENV PYTHONPATH=/app
 
 EXPOSE 8084
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8084"]
-
-ENV PYTHONPATH=/app
-
-EXPOSE 8084
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8084"]
+CMD ["sh", "-c", "pip install -r /app/requirements.txt && uvicorn src.main:app --host 0.0.0.0 --port 8084"]

@@ -2,8 +2,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from local.services.api.src.atmos_api.config import Settings
-from local.services.api.src.atmos_api.services.health import HealthService
+from src.atmos_api.config import Settings
+from src.atmos_api.services.health import HealthService
 
 
 @pytest.mark.asyncio

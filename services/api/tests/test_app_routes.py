@@ -1,13 +1,13 @@
 from fastapi.testclient import TestClient
 import pytest
 
-from local.services.api.src import app as live_app
-from local.services.api.src.atmos_api.deps import (
+from src import app as live_app
+from src.atmos_api.deps import (
     get_health_service,
     get_timeline_service,
     get_trigger_service,
 )
-from local.services.api.src.atmos_api.schemas import (
+from src.atmos_api.schemas import (
     HealthResponse,
     TimelineResponse,
     TriggerCatalogResponse,

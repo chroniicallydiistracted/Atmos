@@ -3,8 +3,8 @@ import json
 import httpx
 import pytest
 
-from local.services.api.src.atmos_api.config import Settings
-from local.services.api.src.atmos_api.services.triggers import (
+from src.atmos_api.config import Settings
+from src.atmos_api.services.triggers import (
     TriggerInvocationError,
     TriggerService,
     UnknownJobError,

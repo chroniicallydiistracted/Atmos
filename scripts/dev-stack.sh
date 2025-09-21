@@ -3,10 +3,10 @@ set -euo pipefail
 
 # Helper for managing the local Atmos stack (API + ingestion + frontend).
 # Usage:
-#   ./local/scripts/dev-stack.sh up       # build and start containers in background
-#   ./local/scripts/dev-stack.sh down     # stop containers and remove volumes (optional --keep-data)
-#   ./local/scripts/dev-stack.sh logs     # tail logs for core services
-#   ./local/scripts/dev-stack.sh seed     # seed MinIO & Postgres with sample data
+#   ./scripts/dev-stack.sh up       # build and start containers in background
+#   ./scripts/dev-stack.sh down     # stop containers and remove volumes (optional --keep-data)
+#   ./scripts/dev-stack.sh logs     # tail logs for core services
+#   ./scripts/dev-stack.sh seed     # seed MinIO & Postgres with sample data
 
 ROOT_DIR=$(cd "$(dirname "$0")/.." && pwd)
 COMPOSE_FILE="$ROOT_DIR/docker-compose.yml"

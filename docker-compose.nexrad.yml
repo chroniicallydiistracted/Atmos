@@ -44,11 +44,11 @@ services:
 
   ingestion:
     build:
-      context: ..
-      dockerfile: local/services/ingestion/Dockerfile
+      context: .
+      dockerfile: services/ingestion/Dockerfile
     env_file: ./config/.env
     volumes:
-      - ./services/ingestion/src:/app/local/services/ingestion/src
+      - ./services/ingestion/src:/app/src
       - ./data/raw:/data/raw
     depends_on:
       - object-store
@@ -71,7 +71,7 @@ services:
     restart: unless-stopped
 
   tiler:
-    build: ../services/tiler
+    build: ./services/tiler
     env_file: ./config/.env
     depends_on:
       - object-store

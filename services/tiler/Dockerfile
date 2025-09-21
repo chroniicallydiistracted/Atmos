@@ -1,9 +1,16 @@
 # syntax=docker/dockerfile:1
-FROM ghcr.io/developmentseed/titiler:latest
+FROM python:3.11-slim
 
-# No AWS dependencies; base image already includes FastAPI, rio-tiler, etc.
-# Install any extra libs if needed (kept minimal)
-RUN pip install --no-cache-dir rio-cogeo minio
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    gdal-bin \
+    libgdal-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+RUN pip install --no-cache-dir rio-tiler fastapi uvicorn "titiler.application>=0.11.0" rio-cogeo minio
 
 WORKDIR /app
 
