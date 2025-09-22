@@ -7,13 +7,13 @@ radar processing pipeline) and returns a trimmed structure suitable for UI legen
 from __future__ import annotations
 
 import json
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path
 from minio import Minio
 
-from ..deps import get_settings
 from ..config import Settings
+from ..deps import get_settings
 
 router = APIRouter(prefix="/v1/legend", tags=["legend"])
 
@@ -32,7 +32,7 @@ def nexrad_legend(
     site: str = Path(..., description="Radar site (e.g. KTLX)"),
     timestamp_key: str = Path(..., description="Timestamp key directory (e.g. 20250101T010203Z)"),
     settings: Settings = Depends(get_settings),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Return legend + metadata subset for a processed NEXRAD product.
 
     The ingestion pipeline stores metadata under the canonical key layout (bucket: derived):

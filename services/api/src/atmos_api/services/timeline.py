@@ -1,7 +1,7 @@
 """Timeline querying helpers."""
 from __future__ import annotations
 
-from typing import Callable, List
+from collections.abc import Callable
 
 from fastapi.concurrency import run_in_threadpool
 
@@ -26,10 +26,10 @@ class TimelineService:
         if not layer:
             raise ValueError("layer must not be empty")
 
-        def _list() -> List[str]:
+        def _list() -> list[str]:
             client = self._minio_factory()
             prefix = f"indices/{layer}/"
-            entries: List[str] = []
+            entries: list[str] = []
             for obj in client.list_objects(self._settings.derived_bucket, prefix=prefix, recursive=True):
                 name = getattr(obj, "object_name", "")
                 if not name.startswith(prefix) or name.endswith("/"):

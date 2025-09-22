@@ -44,8 +44,8 @@ services:
 
   ingestion:
     build:
-      context: .
-      dockerfile: services/ingestion/Dockerfile
+      context: ./services/ingestion
+      dockerfile: Dockerfile
     env_file: ./config/.env
     volumes:
       - ./services/ingestion/src:/app/src

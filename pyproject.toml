@@ -1,0 +1,14 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["services/api", "services/ingestion", "services/common"]
+
+# New-style lint configuration section (ruff warns about legacy top-level keys)
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+# Ignore line length (handled by Black), slice spacing, and FastAPI Depends pattern (B008)
+ignore = ["E203", "E501", "B008"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]

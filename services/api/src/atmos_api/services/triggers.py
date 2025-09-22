@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Optional
 
 import httpx
 
@@ -41,7 +40,7 @@ class TriggerService:
     ) -> None:
         self._settings = settings
         self._transport = transport
-        self._registry: Dict[str, TriggerTarget] = {}
+        self._registry: dict[str, TriggerTarget] = {}
         self.register_job("nexrad", "/trigger/nexrad", description="NEXRAD Level II radar ingestion")
         self.register_job(
             "nexrad-frames",
@@ -61,7 +60,7 @@ class TriggerService:
             ]
         )
 
-    async def trigger(self, job: str, parameters: Optional[Dict[str, object]] = None) -> TriggerResponse:
+    async def trigger(self, job: str, parameters: dict[str, object] | None = None) -> TriggerResponse:
         target = self._registry.get(job)
         if target is None:
             raise UnknownJobError(job)

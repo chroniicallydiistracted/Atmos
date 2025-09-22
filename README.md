@@ -26,7 +26,7 @@ This directory is the new source of truth for the local-first implementation of 
 	```bash
 	docker compose logs -f --tail=100 api ingestion frontend tiler
 	```
-6. Access frontend (Map + Radar loop) at: http://localhost:5173 or published port set in compose.
+6. Access frontend (Map + Radar loop) at: http://localhost:4173 (default Vite preview port exposed by compose) or whichever port you set in `docker-compose.yml`.
 
 ### Rebuild Fast Path
 
@@ -41,14 +41,14 @@ Real multi-frame Level II ingestion & animation is implemented. See `docs/radar-
 
 Trigger new frames (example: 4 frames, 60 min lookback, site KTLX):
 ```bash
-curl -X POST http://localhost:8080/v1/trigger/nexrad-frames \
+curl -X POST http://localhost:8081/v1/trigger/nexrad-frames \
   -H 'Content-Type: application/json' \
   -d '{"parameters":{"site":"KTLX","frames":4,"lookback_minutes":60}}'
 ```
 
 List current frames:
 ```bash
-curl http://localhost:8080/v1/radar/nexrad/KTLX/frames | jq
+curl http://localhost:8081/v1/radar/nexrad/KTLX/frames | jq
 ```
 
 COGs + index (inside the `derived` bucket) canonical path pattern:
@@ -68,20 +68,14 @@ The frontend polls frames and cycles them (~400 ms). No synthetic fallback exist
 
 Run the headless validation script (ensures real frame changes, not static):
 ```bash
-node web/scripts/validate_nexrad_loop.ts
+node scripts/validate_nexrad_loop.ts
 ```
 
 Prereq: Ensure at least one trigger run completed beforehand (script can optionally issue a trigger if coded to do so).
 
 ### Environment Variables
 
-Adjust radar controls via `config/.env` (copied from example):
-* `NEXRAD_MAX_FRAMES`
-* `NEXRAD_LOOKBACK_MINUTES`
-* `NEXRAD_GRID_RES_KM`
-* `NEXRAD_GRID_RADIUS_KM`
-
-Restart affected services after edits:
+See the consolidated reference in `docs/environment.md` for all supported variables and deprecated aliases. Typical adjustments are made in `config/.env`. Restart affected services after edits:
 ```bash
 docker compose up -d ingestion api frontend
 ```
@@ -103,5 +97,5 @@ If you need to look up AWS-specific implementations or previous experiments, ref
 
 - Local architecture overview: `docs/architecture.md`
 - Service responsibilities and contracts: `docs/services.md`
-- Radar loop implementation: `../docs/radar-loop.md`
+- Radar loop implementation: `docs/radar-loop.md`
 - Migration tracking: see root `docs/migration-off-aws.md`

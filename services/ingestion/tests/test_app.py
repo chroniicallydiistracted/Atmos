@@ -1,15 +1,15 @@
 import pathlib
 import sys
 import unittest
-from datetime import datetime, timezone
-
-from fastapi.testclient import TestClient
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, patch
 
-ROOT = pathlib.Path(__file__).resolve().parents[4]
+from fastapi.testclient import TestClient
+
+ROOT = pathlib.Path(__file__).resolve().parents[2]  # adjust relative root for ingestion service
 sys.path.append(str(ROOT))
 
-from local.services.ingestion.src import app as ingestion_app
+from src import app as ingestion_app  # noqa: E402
 
 
 class IngestionAppTest(unittest.TestCase):
@@ -26,7 +26,7 @@ class IngestionAppTest(unittest.TestCase):
     def test_trigger_validation(self):
         response = self.client.post(
             "/trigger/nexrad",
-            json={"site": "KTLX", "timestamp": datetime.now(timezone.utc).isoformat()},
+            json={"site": "KTLX", "timestamp": datetime.now(UTC).isoformat()},
         )
         # The job will likely fail without MinIO, but we care that the API handles it gracefully
         self.assertIn(response.status_code, {200, 500})

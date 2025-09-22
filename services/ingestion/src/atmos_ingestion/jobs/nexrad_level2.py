@@ -16,29 +16,27 @@ from __future__ import annotations
 import datetime as dt
 import io
 import json
-import os
-from typing import Dict, List
 import logging
+import os
 
 import boto3
-from botocore.config import Config
+import numpy as np
+import pyart  # type: ignore
 from botocore import UNSIGNED
+from botocore.config import Config
 from botocore.exceptions import ClientError
+from minio import Minio  # type: ignore
+from rasterio.enums import Resampling
+from rasterio.io import MemoryFile
+from rasterio.transform import from_origin
+
+
 class RadarSourceAccessError(Exception):
     """Raised when the upstream NEXRAD source bucket cannot be accessed with current configuration."""
 
     def __init__(self, message: str, *, code: str | None = None):
         super().__init__(message)
         self.code = code
-
-import numpy as np
-import pyart  # type: ignore
-from minio import Minio  # type: ignore
-from rasterio.enums import Resampling
-from rasterio.io import MemoryFile
-from rasterio.transform import from_origin
-
-DERIVED_BUCKET = os.getenv("DERIVED_BUCKET_NAME") or os.getenv("S3_BUCKET_DERIVED", "derived")
 INDEX_PREFIX = "indices/radar/nexrad"
 COG_PREFIX = "nexrad"
 
@@ -50,6 +48,8 @@ NEXRAD_BUCKET_NAME = os.getenv("NEXRAD_BUCKET_NAME", "unidata-nexrad-level2")
 # Request payer and credentials are intentionally ignored; bucket must be fully public per local policy.
 
 logger = logging.getLogger("nexrad_level2")
+
+DERIVED_BUCKET = os.getenv("S3_BUCKET_DERIVED", "derived")
 
 _unsigned_cfg = Config(signature_version=UNSIGNED, retries={"max_attempts": 5, "mode": "standard"})
 _s3_unsigned = None  # type: ignore
@@ -78,7 +78,7 @@ def _frames_index_key(site: str) -> str:
     return f"{INDEX_PREFIX}/{site}/frames.json"
 
 
-def load_frames_index(site: str) -> List[Dict]:
+def load_frames_index(site: str) -> list[dict]:
     key = _frames_index_key(site)
     try:
         data = minio_client.get_object(DERIVED_BUCKET, key).read()
@@ -87,7 +87,7 @@ def load_frames_index(site: str) -> List[Dict]:
         return []
 
 
-def save_frames_index(site: str, frames: List[Dict]):
+def save_frames_index(site: str, frames: list[dict]):
     key = _frames_index_key(site)
     frames = frames[-MAX_FRAMES:]
     payload = json.dumps(frames, separators=(",", ":")).encode()
@@ -96,14 +96,14 @@ def save_frames_index(site: str, frames: List[Dict]):
     )
 
 
-def list_recent_site_objects(site: str, lookback_minutes: int) -> List[Dict]:
+def list_recent_site_objects(site: str, lookback_minutes: int) -> list[dict]:
     site = site.upper()
     now = dt.datetime.utcnow()
     date = now.date()
     prefix = f"{date:%Y/%m/%d}/{site}/"
     # Anonymous listing only (no credential fallback by policy)
     paginator = _get_s3().get_paginator("list_objects_v2")
-    objs: List[Dict] = []
+    objs: list[dict] = []
 
     # First, collect ALL objects to sort them by timestamp (newest first)
     all_objects = []
@@ -154,11 +154,11 @@ def _timestamp_key(site: str, key: str) -> str:
     return f"{ts_str}Z"
 
 
-def _already_have(frames: List[Dict], ts_key: str) -> bool:
+def _already_have(frames: list[dict], ts_key: str) -> bool:
     return any(f["timestamp_key"] == ts_key for f in frames)
 
 
-def process_volume(site: str, key: str) -> Dict:
+def process_volume(site: str, key: str) -> dict:
     client = _get_s3()
     try:
         obj = client.get_object(Bucket=NEXRAD_BUCKET_NAME, Key=key)
@@ -268,7 +268,7 @@ def process_volume(site: str, key: str) -> Dict:
     }
 
 
-def run_nexrad_level2(site: str, lookback_minutes: int, max_new: int) -> Dict:
+def run_nexrad_level2(site: str, lookback_minutes: int, max_new: int) -> dict:
     site = site.upper()
     existing = load_frames_index(site)
     objects = list_recent_site_objects(site, lookback_minutes)

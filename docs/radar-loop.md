@@ -15,17 +15,18 @@ This document captures the implemented real (non-synthetic) Level II radar inges
 
 | Component | File |
 |-----------|------|
-| Multi-frame job | `local/services/ingestion/src/atmos_ingestion/jobs/nexrad_level2.py` |
-| Trigger registration | `local/services/api/src/atmos_api/services/triggers.py` |
-| Frames endpoint | `local/services/api/src/atmos_api/routers/radar.py` |
-| Frontend frames hook | `local/services/frontend/src/hooks/useNexradFrames.ts` |
-| Validation script (headless) | `web/scripts/validate_nexrad_loop.ts` |
+| Multi-frame job | `services/ingestion/src/atmos_ingestion/jobs/nexrad_level2.py` |
+| Trigger registration | `services/api/src/atmos_api/services/triggers.py` |
+| Frames endpoint | `services/api/src/atmos_api/routers/radar.py` |
+| Frontend frames hook | `services/frontend/src/hooks/useNexradFrames.ts` |
+| Validation script (headless) | `scripts/validate_nexrad_loop.ts` |
 
 ## Environment Variables (excerpt)
 
-* `NEXRAD_MAX_FRAMES` – rolling window size.
-* `NEXRAD_LOOKBACK_MINUTES` – default volume search window.
-* `NEXRAD_GRID_RES_KM`, `NEXRAD_GRID_RADIUS_KM` – gridding parameters.
+See `docs/environment.md` for authoritative list. Key ingestion-related variables include:
+* `MINIO_ENDPOINT`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`
+* `S3_BUCKET_DERIVED`
+* `NEXRAD_DEFAULT_SITE`, `NEXRAD_DEFAULT_MINUTES_LOOKBACK`
 
 ## Tile Template
 

@@ -1,10 +1,10 @@
-import { vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
-
-import App from "../pages/App";
-import { queryClient } from "../lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { vi } from "vitest";
+
+import { queryClient } from "../lib/queryClient";
+import App from "../pages/App";
 
 vi.mock("maplibre-gl", () => {
   const mapMock = vi.fn(() => ({
@@ -42,7 +42,10 @@ function renderApp() {
   );
 }
 
-vi.stubGlobal("fetch", vi.fn((url: RequestInfo | URL) => {
+// Some environments may not have the DOM lib's RequestInfo type; ensure minimal compatibility
+type _TestRequestInfo = any; // fallback alias for CI types without DOM
+
+vi.stubGlobal("fetch", vi.fn((url: _TestRequestInfo | URL) => {
   if (typeof url === "string" && url.endsWith("/v1/healthz")) {
     return Promise.resolve(
       new Response(JSON.stringify({ checks: { minio: "ok" }, ok: true }), {

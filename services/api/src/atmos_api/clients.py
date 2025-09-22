@@ -1,7 +1,6 @@
 """Client factories shared across services."""
 from __future__ import annotations
 
-from typing import Tuple
 from urllib.parse import urlparse
 
 from minio import Minio

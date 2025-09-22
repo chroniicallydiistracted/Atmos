@@ -1,7 +1,7 @@
 """Pydantic models shared across routers."""
 from __future__ import annotations
 
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -10,13 +10,13 @@ class HealthResponse(BaseModel):
     service: Literal["api"] = "api"
     status: Literal["ok", "error"] = "ok"
     ok: bool = True
-    checks: Dict[str, str] = Field(default_factory=dict)
+    checks: dict[str, str] = Field(default_factory=dict)
 
 
 class TimelineResponse(BaseModel):
     layer: str
     count: int
-    entries: List[str] = Field(default_factory=list)
+    entries: list[str] = Field(default_factory=list)
 
 
 class TriggerCatalogEntry(BaseModel):
@@ -25,17 +25,17 @@ class TriggerCatalogEntry(BaseModel):
 
 
 class TriggerCatalogResponse(BaseModel):
-    jobs: List[TriggerCatalogEntry] = Field(default_factory=list)
+    jobs: list[TriggerCatalogEntry] = Field(default_factory=list)
 
 
 class TriggerRequest(BaseModel):
-    parameters: Dict[str, Any] = Field(default_factory=dict)
+    parameters: dict[str, Any] = Field(default_factory=dict)
 
 
 class TriggerResponse(BaseModel):
     job: str
     status: Literal["ok"] = "ok"
-    detail: Dict[str, Any] = Field(default_factory=dict)
+    detail: dict[str, Any] = Field(default_factory=dict)
 
 
 __all__ = [

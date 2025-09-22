@@ -1,9 +1,9 @@
 import unittest
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
-from local.services.ingestion.src.atmos_ingestion.config import IngestionSettings
-from local.services.ingestion.src.atmos_ingestion.jobs.goes import GoesIngestion
+from src.atmos_ingestion.config import IngestionSettings
+from src.atmos_ingestion.jobs.goes import GoesIngestion
 
 
 class _StubClients:
@@ -30,10 +30,10 @@ class GoesIngestionJobTest(unittest.TestCase):
     def test_run_latest_uses_helpers(self):
         timestamp = datetime(2024, 8, 10, 0, 40)
         with patch(
-            "local.services.ingestion.src.atmos_ingestion.jobs.goes.find_latest_goes_data",
+            "src.atmos_ingestion.jobs.goes.find_latest_goes_data",
             return_value=(timestamp, "path/to/file.nc"),
         ) as latest, patch(
-            "local.services.ingestion.src.atmos_ingestion.jobs.goes.process_goes_file",
+            "src.atmos_ingestion.jobs.goes.process_goes_file",
             return_value={"cog_key": "derived/goes/file.tif"},
         ) as processor:
             result = self.job.run(None, None, None)
@@ -55,15 +55,15 @@ class GoesIngestionJobTest(unittest.TestCase):
         self.assertIn("ingested_time", result)
 
     def test_run_with_timestamp_normalises(self):
-        requested = datetime(2024, 8, 10, 0, 0, tzinfo=timezone.utc)
+        requested = datetime(2024, 8, 10, 0, 0, tzinfo=UTC)
         with patch(
-            "local.services.ingestion.src.atmos_ingestion.jobs.goes.find_goes_file_for_time",
+            "src.atmos_ingestion.jobs.goes.find_goes_file_for_time",
             return_value="prefix/file.nc",
         ) as finder, patch(
-            "local.services.ingestion.src.atmos_ingestion.jobs.goes.extract_goes_timestamp",
+            "src.atmos_ingestion.jobs.goes.extract_goes_timestamp",
             return_value=None,
         ), patch(
-            "local.services.ingestion.src.atmos_ingestion.jobs.goes.process_goes_file",
+            "src.atmos_ingestion.jobs.goes.process_goes_file",
             return_value={},
         ) as processor:
             result = self.job.run(8, "conus", requested)

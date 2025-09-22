@@ -65,7 +65,8 @@ services:
       dockerfile: services/ingestion/Dockerfile
     env_file: ./config/.env
     volumes:
-      - ./services/ingestion/src:/app/src
+      - ./services/ingestion:/app/atmos_ingestion
+      - ./services/common:/app/atmos_common
       - ./data/raw:/data/raw
     depends_on:
       - object-store
@@ -73,20 +74,11 @@ services:
       - "8084:8084"
     restart: unless-stopped
 
-  basemap:
-    build: ./services/basemap
-    env_file: ./config/.env
-    volumes:
-      - ./services/basemap/src:/app/src
-      - ./data/basemaps:/app/data
-    depends_on:
-      - postgres
-    ports:
-      - "8082:8082"
-    restart: unless-stopped
 
   api:
-    build: ./services/api
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
     env_file: ./config/.env
     depends_on:
       object-store:
@@ -96,7 +88,8 @@ services:
     ports:
       - "8081:8081"
     volumes:
-      - ./services/api/src:/app/src
+      - ./services/api:/app/atmos_api
+      - ./services/common:/app/atmos_common
     restart: unless-stopped
 
   tiler:

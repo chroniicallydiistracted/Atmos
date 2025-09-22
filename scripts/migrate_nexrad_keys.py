@@ -30,15 +30,22 @@ from typing import List, Dict
 import io
 from minio import Minio  # type: ignore
 
-DERIVED_BUCKET = os.getenv("DERIVED_BUCKET_NAME") or os.getenv("S3_BUCKET_DERIVED", "derived")
+DERIVED_BUCKET = os.getenv("S3_BUCKET_DERIVED", "derived")
 INDEX_PREFIX = "indices/radar/nexrad"
 
-client = Minio(
-    os.getenv("MINIO_ENDPOINT", "object-store:9000").replace("http://", "").replace("https://", ""),
-    access_key=os.getenv("MINIO_ROOT_USER"),
-    secret_key=os.getenv("MINIO_ROOT_PASSWORD"),
-    secure=False,
-)
+    # Use environment variables for configuration
+    minio_endpoint = os.getenv("MINIO_ENDPOINT", "object-store:9000")
+    access_key = os.getenv("MINIO_ROOT_USER", "localminio")
+    secret_key = os.getenv("MINIO_ROOT_PASSWORD", "change-me-now")
+    derived_bucket = os.getenv("S3_BUCKET_DERIVED", "derived")
+    secure = os.getenv("MINIO_SECURE", "false").lower() == "true"
+
+    client = Minio(
+        minio_endpoint,
+        access_key=access_key,
+        secret_key=secret_key,
+        secure=secure,
+    )
 
 
 def list_objects(prefix: str):

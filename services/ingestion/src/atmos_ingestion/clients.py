@@ -1,12 +1,10 @@
 """Client factories used by the ingestion service."""
 from __future__ import annotations
 
-from typing import Optional
-
 import boto3
+from botocore import UNSIGNED
 from botocore.client import BaseClient
 from botocore.config import Config
-from botocore import UNSIGNED
 
 from .config import IngestionSettings
 
@@ -41,8 +39,8 @@ class ClientBundle:
 
     def __init__(self, settings: IngestionSettings):
         self._settings = settings
-        self._source: Optional[BaseClient] = None
-        self._derived: Optional[BaseClient] = None
+        self._source: BaseClient | None = None
+        self._derived: BaseClient | None = None
 
     @property
     def source(self) -> BaseClient:

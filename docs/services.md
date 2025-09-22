@@ -1,6 +1,6 @@
 # Service Catalogue
 
-This document enumerates the services that will live under `local/services/`. Each will be implemented from scratch to avoid AWS-specific baggage.
+This document enumerates the services under `services/`. Each is implemented (or planned) without AWS-specific assumptions.
 
 ## 1. object-store
 - **Purpose**: Provide an S3-compatible interface using MinIO.
@@ -41,9 +41,9 @@ This document enumerates the services that will live under `local/services/`. Ea
 
 ## 8. backup
 - **Purpose**: Scheduled jobs to snapshot Postgres, object store, configs.
-- **Implementation**: Bash + `restic` or `rsync` scripts under `local/scripts/`.
+- **Implementation**: Bash + `restic` or `rsync` scripts under `scripts/`.
 
-Each service gets its own folder under `local/services/<name>` with:
+Each service lives under `services/<name>` with:
 - `Dockerfile`
 - `README.md`
 - `src/` or equivalent code directory

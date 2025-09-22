@@ -3,15 +3,15 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, Literal, Optional, Union
+from typing import Any, Literal
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from .atmos_ingestion.config import IngestionSettings
-from .atmos_ingestion.service import IngestionService
 from .atmos_ingestion.jobs.nexrad_level2 import RadarSourceAccessError
+from .atmos_ingestion.service import IngestionService
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(levelname)s %(name)s: %(message)s")
@@ -31,15 +31,15 @@ app.state.ingestion_service = ingestion_service
 
 
 class NexradTrigger(BaseModel):
-    site: Optional[str] = Field(default=None, description="Radar site identifier (e.g. KTLX)")
-    timestamp: Optional[datetime] = Field(
+    site: str | None = Field(default=None, description="Radar site identifier (e.g. KTLX)")
+    timestamp: datetime | None = Field(
         default=None,
         description="UTC time to target. When omitted the service selects the freshest volume automatically.",
     )
 
 
 class NexradFramesTrigger(BaseModel):
-    site: Optional[str] = Field(default=None, description="Radar site identifier (e.g. KTLX)")
+    site: str | None = Field(default=None, description="Radar site identifier (e.g. KTLX)")
     frames: int = Field(
         default=3,
         ge=1,
@@ -56,21 +56,21 @@ class NexradFramesTrigger(BaseModel):
 
 class TriggerResponse(BaseModel):
     status: str
-    detail: Dict[str, Any]
+    detail: dict[str, Any]
 
 
 class GoesTrigger(BaseModel):
-    band: Optional[int] = Field(
+    band: int | None = Field(
         default=None,
         ge=1,
         le=16,
         description="ABI channel number. Defaults to configured GOES_DEFAULT_BAND.",
     )
-    sector: Optional[str] = Field(
+    sector: str | None = Field(
         default=None,
         description="GOES sector shorthand (e.g. CONUS, FULL). Defaults to GOES_DEFAULT_SECTOR.",
     )
-    timestamp: Optional[Union[datetime, Literal["latest"]]] = Field(
+    timestamp: datetime | Literal["latest"] | None = Field(
         default=None,
         description="UTC time to target. When omitted or set to 'latest', the freshest scan is ingested.",
     )

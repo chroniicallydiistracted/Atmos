@@ -1,10 +1,10 @@
 """Health probe helpers."""
 from __future__ import annotations
 
-from typing import Callable, Dict
+from collections.abc import Callable
 
-from fastapi.concurrency import run_in_threadpool
 import psycopg
+from fastapi.concurrency import run_in_threadpool
 
 from ..clients import create_minio_client
 from ..config import Settings
@@ -26,7 +26,7 @@ class HealthService:
         self._postgres_dsn = postgres_dsn or settings.database_url
 
     async def probe(self) -> HealthResponse:
-        checks: Dict[str, str] = {}
+        checks: dict[str, str] = {}
 
         try:
             client = self._minio_factory()

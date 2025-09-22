@@ -4,7 +4,6 @@ from __future__ import annotations
 from functools import cached_property
 from pathlib import Path
 from urllib.parse import urlparse
-from typing import Optional
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -106,12 +105,18 @@ class IngestionSettings(BaseSettings):
     )
 
     @staticmethod
-    def _discover_env_file() -> Optional[Path]:
+    def _discover_env_file() -> Path | None:
         here = Path(__file__).resolve()
+        # Priority order:
+        # 1. Top-level config/.env (current canonical location)
+        # 2. Historical local/config/.env (legacy layout)
         for candidate in here.parents:
-            maybe = candidate / "local" / "config" / ".env"
-            if maybe.exists():
-                return maybe
+            top = candidate / "config" / ".env"
+            if top.exists():
+                return top
+            legacy = candidate / "local" / "config" / ".env"
+            if legacy.exists():
+                return legacy
         return None
 
     _env_file = _discover_env_file.__func__()  # type: ignore[misc]
